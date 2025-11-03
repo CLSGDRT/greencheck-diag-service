@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  title: GreenCheck Diag Service
+  version: 1.0.0
+  description: API pour diagnostiquer l'état de santé d'une plante via image et texte utilisateur.
+servers:
+  - url: http://localhost:8000
+    description: Serveur local
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    DiagnoseRequest:
+      type: object
+      required:
+        - image_id
+        - user_text
+      properties:
+        image_id:
+          type: string
+          format: uuid
+          description: UUID de l'image stockée sur le cloud
+        user_text:
+          type: string
+          description: Texte saisi par l'utilisateur concernant la plante
+    DiagnoseResponse:
+      type: object
+      properties:
+        image_id:
+          type: string
+          format: uuid
+        user_text:
+          type: string
+        score:
+          type: number
+          format: float
+          description: Note de santé de la plante sur 5
+        disease:
+          type: string
+          description: Maladie détectée, vide si aucune
+        advice:
+          type: string
+          description: Conseils de traitement ou prévention
+        error:
+          type: string
+          description: Message d'erreur si applicable
+
+security:
+  - BearerAuth: []
+
+paths:
+  /diag:
+    post:
+      summary: Diagnostiquer l'état de santé d'une plante
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DiagnoseRequest'
+      responses:
+        '200':
+          description: Diagnostic réussi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnoseResponse'
+        '400':
+          description: 'Mauvaise requête (ex: image non plante)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnoseResponse'
+        '401':
+          description: JWT invalide ou manquant
+        '500':
+          description: Erreur interne du serveur
