@@ -9,7 +9,7 @@ from app.models.models import DiagResult
 import uuid
 import torch
 from transformers import Blip2Processor, Blip2ForConditionalGeneration
-
+from typing import Optional
 from app.utils.safe_call import SafeCall
 import requests
 
@@ -25,13 +25,17 @@ safe = SafeCall(http_timeout=15, http_retries=2, http_backoff=1.0)
 class DiagState(BaseModel):
     image_id: str
     user_text: str
-    jwt_token: str = None
-    image: Image.Image = None
-    image_description: str = None
-    is_plant: bool = None
-    score: float = None
-    disease: str = None
-    advice: str = None
+    jwt_token: Optional[str] = None
+    image: Optional[Image.Image] = None
+    image_description: Optional[str] = None
+    is_plant: Optional[bool] = None
+    score: Optional[float] = None
+    disease: Optional[str] = None
+    advice: Optional[str] = None
+
+    model_config = {
+        "arbitrary_types_allowed": True
+    }
 
 class IsPlant(BaseModel):
     is_plant: bool

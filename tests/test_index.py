@@ -1,11 +1,11 @@
 import pytest
 import json
+from unittest.mock import patch, MagicMock
 from app.api.app import app
-from unittest.mock import patch
 from app.utils.graph import DiagState
 
 # ---------------------------
-# Fixtures Flask
+# Fixture Flask
 # ---------------------------
 @pytest.fixture
 def client():
@@ -14,14 +14,14 @@ def client():
         yield client
 
 # ---------------------------
-# Mock JWT valide
+# JWT simulé
 # ---------------------------
 VALID_JWT = "Bearer faketoken123"
 
 # ---------------------------
-# Mock du graphe pour éviter de lancer LLM / BLIP
+# Mock du graphe pour éviter LLM / BLIP
 # ---------------------------
-def mock_run(state):
+def mock_run(state: DiagState):
     state.is_plant = True
     state.score = 4.5
     state.disease = "Aucune"
@@ -29,7 +29,7 @@ def mock_run(state):
     return state
 
 # ---------------------------
-# Test /diag route
+# Test endpoint /diag avec JWT valide
 # ---------------------------
 @patch("app.utils.graph.assistant_graph.run", side_effect=mock_run)
 @patch("app.utils.verify_jwt.JWTVerifier.verify_token", return_value={"sub": "user123"})
@@ -54,7 +54,7 @@ def test_diag_endpoint(mock_jwt, mock_graph_run, client):
     assert data["advice"] == "Arroser régulièrement"
 
 # ---------------------------
-# Test sans JWT
+# Test endpoint /diag sans JWT
 # ---------------------------
 def test_diag_no_jwt(client):
     payload = {
@@ -73,7 +73,7 @@ def test_diag_no_jwt(client):
     assert "JWT invalide" in data["message"]
 
 # ---------------------------
-# Test image non plante
+# Test endpoint /diag pour image non-plante
 # ---------------------------
 @patch("app.utils.graph.assistant_graph.run")
 @patch("app.utils.verify_jwt.JWTVerifier.verify_token", return_value={"sub": "user123"})

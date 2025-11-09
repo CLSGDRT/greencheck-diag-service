@@ -1,8 +1,11 @@
 openapi: 3.0.3
 info:
   title: GreenCheck Diag Service
-  version: 1.0.0
-  description: API pour diagnostiquer l'état de santé d'une plante via image et texte utilisateur.
+  version: 1.1.0
+  description: >
+    API du microservice de diagnostic GreenCheck.  
+    Permet d'analyser l'état de santé d'une plante à partir d'une image et d'un texte utilisateur, 
+    et de consulter les diagnostics enregistrés par utilisateur.
 servers:
   - url: http://localhost:8000
     description: Serveur local
@@ -28,9 +31,14 @@ components:
         user_text:
           type: string
           description: Texte saisi par l'utilisateur concernant la plante
+
     DiagnoseResponse:
       type: object
       properties:
+        id:
+          type: string
+          format: uuid
+          description: Identifiant unique du diagnostic
         image_id:
           type: string
           format: uuid
@@ -46,6 +54,10 @@ components:
         advice:
           type: string
           description: Conseils de traitement ou prévention
+        created_at:
+          type: string
+          format: date-time
+          description: Date de création du diagnostic
         error:
           type: string
           description: Message d'erreur si applicable
@@ -57,6 +69,7 @@ paths:
   /diag:
     post:
       summary: Diagnostiquer l'état de santé d'une plante
+      description: Lance un diagnostic basé sur une image et un texte utilisateur, et enregistre le résultat en base.
       security:
         - BearerAuth: []
       requestBody:
@@ -82,3 +95,46 @@ paths:
           description: JWT invalide ou manquant
         '500':
           description: Erreur interne du serveur
+  /diags:
+    get:
+      summary: Lister tous les diagnostics de l'utilisateur connecté
+      description: Retourne la liste complète des diagnostics appartenant à l'utilisateur identifié par le JWT.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Liste des diagnostics de l'utilisateur
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DiagnoseResponse'
+        '401':
+          description: JWT invalide ou manquant
+
+  /diag/{diag_id}:
+    get:
+      summary: Récupérer un diagnostic spécifique
+      description: Retourne le diagnostic correspondant à l'ID, s'il appartient à l'utilisateur connecté.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: diag_id
+          in: path
+          required: true
+          description: Identifiant unique du diagnostic
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Diagnostic trouvé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DiagnoseResponse'
+        '401':
+          description: JWT invalide ou manquant
+        '404':
+          description: Diagnostic introuvable ou non autorisé
